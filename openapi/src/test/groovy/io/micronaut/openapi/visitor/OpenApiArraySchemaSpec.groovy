@@ -389,4 +389,57 @@ class MyBean {}
         schemas.Teste.properties.array.type == "array"
         schemas.Teste.properties.array.items.type == "string"
     }
+
+    void "test ArraySchema type override"() {
+
+        when:
+        buildBeanDefinition('test.MyBean', '''
+package test;
+
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Controller
+interface DefaultApi {
+
+    @Get("/hello")
+    Teste hello();
+}
+
+@Schema(name = "Teste")
+class Teste {
+
+    @ArraySchema(schema = @Schema(implementation = String.class))
+    public List<Pet> array = new ArrayList<>();
+}
+
+@Schema(description = "Pet")
+class Pet {
+    @Schema(description = "The name of the pet")
+    public String name;
+}
+
+@jakarta.inject.Singleton
+class MyBean {}
+''')
+        then:
+        Utils.testReference != null
+
+        when:
+        def openApi = Utils.testReference
+        def schemas = openApi.components.schemas
+
+        then:
+        schemas.Teste
+        schemas.Teste.properties.size() == 1
+
+        schemas.Teste.properties.array.type == "array"
+        schemas.Teste.properties.array.items.type == "string"
+    }
 }
