@@ -371,42 +371,42 @@ open class MyEntity2Controller {
     ): String? {
         return null
     }
-    
+
     @Serdeable
     enum class MyEnum(
         @get:JsonValue val value: String
     ) {
-    
+
         @JsonProperty("v1")
         V1("v1"),
-    
+
         @JsonProperty("v2")
         V2("v2"),
-    
+
         @JsonProperty("v3")
         V3("v3"),
-    
+
         @JsonProperty("v4")
         V4("v4"),
-    
+
         @JsonProperty("v5")
         V5("v5"),
-    
+
         @JsonProperty("v6")
         V6("v6"),
-    
+
         @JsonProperty("v7")
         V7("v7");
-    
+
         override fun toString(): String {
             return value
         }
-    
+
         companion object {
-    
+
             @JvmField
             val VALUE_MAPPING = entries.associateBy { it.value }
-    
+
             /**
              * Create this enum from a value.
              *
@@ -483,5 +483,46 @@ public class MyBean {}
         openAPI.components.schemas.FooRecord.properties.foo.type == 'string'
         openAPI.components.schemas.FooRecord.properties.bar
         openAPI.components.schemas.FooRecord.properties.bar.type == 'string'
+    }
+
+    void "test kotlin enum list parameter"() {
+
+        when:
+        buildBeanDefinition('test.MyBean', '''
+package test
+
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.QueryValue;
+
+@Controller
+open class Controller {
+
+    @Get("/test1")
+    open fun hello(
+        @QueryValue("types") types: List<TypeEnum>?,
+    ): String?{
+        return null
+    }
+
+    enum class TypeEnum {
+        TYPE1
+    }
+}
+
+
+@jakarta.inject.Singleton
+class MyBean {}
+''')
+        then: "the state is correct"
+        Utils.testReference != null
+
+        when: "The OpenAPI is retrieved"
+        def openAPI = Utils.testReference
+        Schema schema1 = openAPI.components.schemas."Controller.TypeEnum"
+
+        then: "the components are valid"
+        schema1.type == "string"
+        schema1.enum.size() == 1
     }
 }
